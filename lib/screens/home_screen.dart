@@ -10,16 +10,62 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
+  late AnimationController _fadeController, _slideController;
+
+
+  @override
+  void initState(){
+    super.initState();
+    _fadeController = AnimationController(
+      duration: Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    // Start the animations
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose(){
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Weather App"),
-      ),
-      body: Center(
-        child: Text("Current Location Weather"),
-      ),
+      body: Stack(
+        children: [
+          // Background Image Layer
+          _buildBackgroundImage()
+        ],
+      )
+    );
+  }
+  Widget _buildBackgroundImage(){
+    return AnimatedBuilder(
+      animation: _slideController,
+      builder: (context, child){
+        return Transform.translate(
+          offset: Offset(0, -20 * _slideController.value),
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Background image.jpg'),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

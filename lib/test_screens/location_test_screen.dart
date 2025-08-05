@@ -6,6 +6,8 @@ import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationTestScreen extends StatefulWidget {
+  const LocationTestScreen({super.key});
+
   @override
   _LocationTestScreenState createState() => _LocationTestScreenState();
 }
