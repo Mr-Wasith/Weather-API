@@ -2,7 +2,7 @@
 // Run with: flutter test
 
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/services/weather_service.dart';
+import 'package:weatherapp/services/weather_service.dart';
 
 void main() {
   group('WeatherProvider Tests', () {
