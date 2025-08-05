@@ -18,3 +18,19 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Assets configuration
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/weather/
+    - assets/fonts/
+
+  # Custom fonts configuration
+  # fonts:
+  #   - family: WeatherFont
+  #     fonts:
+  #       - asset: assets/fonts/weather/WeatherFont-Regular.ttf
+  #       - asset: assets/fonts/weather/WeatherFont-Bold.ttf
+  #         weight: 700
