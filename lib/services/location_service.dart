@@ -1,6 +1,7 @@
 // Location service
 // This service will handle location-related operations (getting current location, geocoding, etc.)
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'dart:async';
 
 class LocationService{
@@ -41,26 +42,41 @@ class LocationService{
   Future<Position?> getCurrentLocation() async {
   try {
     // Check location permission
-    bool hasPermission = await _checkLocationPermission();
-    if (!hasPermission) {
-      print('Location permission denied');
+      bool hasPermission = await _checkLocationPermission();
+      if (!hasPermission) {
+        print('Location permission denied');
+        return null;
+      }
+
+      // Get current location once
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+    
+      print('Current position: ${position.latitude}, ${position.longitude}');
+      return position;
+    } catch (e) {
+      print('Error getting current location: $e');
       return null;
     }
-
-    // Get current location once
-    Position position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 10),
-      ),
-    );
-    
-    print('Current position: ${position.latitude}, ${position.longitude}');
-    return position;
-  } catch (e) {
-    print('Error getting current location: $e');
+  }
+  Future<String?> getCityFromCoordinates(double latitude, double longitude) async {
+    try{
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if(placemarks.isNotEmpty){
+        Placemark placemark = placemarks[0];
+        String? city = placemark.locality;
+        String? area = placemark.subLocality;
+        String? country = placemark.country;
+        return city ?? area ?? country ?? 'Unknown Location';
+      }
+    }catch (e) {
+      print('Error getting city from coordinates: $e');
+      return null;
+    }
     return null;
   }
-}
-
 }
