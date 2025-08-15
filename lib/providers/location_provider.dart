@@ -12,3 +12,12 @@ final currLocation = FutureProvider(
     return city;
   },
 );
+
+final countryLocation = FutureProvider(
+  (ref) async {
+    LocationService locationService = LocationService();
+    Position? position = await locationService.getCurrentLocation();
+    String? country = await locationService.getCountryFromCoordinates(position!.latitude, position.longitude);
+    return country;
+  },
+);

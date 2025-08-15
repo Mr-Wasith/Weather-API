@@ -135,7 +135,7 @@ void main() {
     // Integration test (requires internet connection)
     test('should fetch real weather data', () async {
       try {
-        Map<String, dynamic> weatherData = await weatherProvider.fetchWeather('London');
+        Map<String, dynamic> weatherData = await weatherProvider.fetchWeather('London', 'England');
         
         // Check if essential fields exist
         expect(weatherData.containsKey('main'), isTrue);

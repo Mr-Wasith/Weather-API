@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:weatherapp/services/location_service.dart';
 class WeatherProvider{
   // Define state variables and methods for weather data management
   late final String _baseUrl = "http://api.openweathermap.org/data/2.5/weather?";
@@ -12,14 +13,21 @@ class WeatherProvider{
     _apiKey = apiKey;
   }
   // Fetch weather data for a given city
-  Future<Map<String, dynamic>> fetchWeather(String city) async{
+  Future<Map<String, dynamic>> fetchWeather(String city, String country) async{
     try{
-      final url = _getWeatherUrl(city);
+      String url = _getWeatherUrl(city);
       final response = await http.get(Uri.parse(url));
       if(response.statusCode == 200){
         return json.decode(response.body);
       }else{
-        throw Exception("Failed to load weather data");
+        // TODO: Do this shit
+        url = await _getWeatherCountryUrl(country);
+        final response2 = await http.get(Uri.parse(url));
+        if(response2.statusCode == 200){
+          return json.decode(response2.body);
+        }else{
+          throw Exception("Failed to load weather data");
+        }
       }
     }catch(e){
       print("Error fetching weather data: $e");
@@ -245,6 +253,14 @@ class WeatherProvider{
   String _getWeatherUrl(String city){
     //BASE_URL + "appid=" + API_KEY + "&q=" + CITY
     return "${_baseUrl}appid=$_apiKey&q=$city";
+  }
+  Future<String> _getWeatherCountryUrl(String country) async {
+    final coords = await LocationService().getCoordinatesFromCountryName(country);
+    if (coords != null) {
+      return "${_baseUrl}appid=$_apiKey&lat=${coords['latitude']}&lon=${coords['longitude']}";
+    }
+    // Fallback to country name
+    return "${_baseUrl}appid=$_apiKey&q=$country";
   }
   
 }

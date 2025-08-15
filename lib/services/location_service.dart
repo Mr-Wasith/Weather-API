@@ -69,14 +69,43 @@ class LocationService{
       if(placemarks.isNotEmpty){
         Placemark placemark = placemarks[0];
         String? city = placemark.locality;
-        String? area = placemark.subLocality;
-        String? country = placemark.country;
-        return city ?? area ?? country ?? 'Unknown Location';
+        return city ?? 'Unknown Location';
       }
     }catch (e) {
       print('Error getting city from coordinates: $e');
       return null;
     }
     return null;
+  }
+  Future<String?> getCountryFromCoordinates(double latitude, double longitude) async {
+    try{
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if(placemarks.isNotEmpty){
+        Placemark placemark = placemarks[0];
+        String? country = placemark.country;
+        return country ?? 'Unknown Location';
+      }
+    }catch (e) {
+      print('Error getting country from coordinates: $e');
+      return null;
+    }
+    return null;
+  }
+  // Add this method to your existing LocationService class
+  Future<Map<String, double>?> getCoordinatesFromCountryName(String countryName) async {
+    try {
+      List<Location> locations = await locationFromAddress(countryName);
+      if (locations.isNotEmpty) {
+        Location location = locations[0];
+        return {
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting coordinates from country name: $e');
+      return null;
+    }
   }
 }
