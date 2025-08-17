@@ -1,6 +1,3 @@
-// Home screen - displays current location weather
-// This screen will show weather details for the user's current location
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -17,74 +14,71 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with TickerProviderStateMixin {
   late AnimationController _fadeController, _slideController;
-  late SlidingUpPanelController _panelController; // Add panel controller
+  late SlidingUpPanelController _panelController;
   DateTime _currentDateTime = DateTime.now();
   late Timer _timer;
-  late Timer _weatherTimer; // Timer for weather data updates
+  late Timer _weatherTimer;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
+    
     _fadeController = AnimationController(
       duration: Duration(milliseconds: 1500),
       vsync: this,
     );
+    
     _slideController = AnimationController(
       duration: Duration(milliseconds: 1500),
       vsync: this,
     );
-    _panelController = SlidingUpPanelController(); // Initialize panel controller
     
-    // Start the animations
+    _panelController = SlidingUpPanelController();
+
     _fadeController.forward();
     _slideController.forward();
-    
-    // Update DateTime every second
+
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _currentDateTime = DateTime.now();
       });
     });
-    
-    // Update weather data every 2 minutes (120 seconds) for more frequent updates
+
     _weatherTimer = Timer.periodic(Duration(minutes: 2), (timer) {
       _refreshWeatherData();
     });
-    
-    // Initial refresh of weather data
+
     Future.delayed(Duration(seconds: 1), () {
       _refreshWeatherData();
     });
   }
 
   @override
-  void dispose(){
+  void dispose() {
     _timer.cancel();
-    _weatherTimer.cancel(); // Cancel weather timer
+    _weatherTimer.cancel();
     _fadeController.dispose();
     _slideController.dispose();
     super.dispose();
   }
 
-  // Method to refresh weather data
   Future<void> _refreshWeatherData() async {
-    // Invalidate the providers to force refresh
     ref.invalidate(currTemp);
     ref.invalidate(currFeelsLike);
     ref.invalidate(currWindSpeed);
     ref.invalidate(currHumidity);
     ref.invalidate(description);
     ref.invalidate(currLocation);
-    ref.invalidate(countryLocation); // Also refresh country location
-    
-    // Wait a bit to ensure providers have time to refresh
+    ref.invalidate(countryLocation);
+
     await Future.delayed(Duration(milliseconds: 500));
-    
-    print('Weather data refreshed at ${DateTime.now()}'); // Debug print
+    print('Weather data refreshed at ${DateTime.now()}');
   }
-  String formatDateTime(DateTime dateTime){
+
+  String formatDateTime(DateTime dateTime) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -93,25 +87,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions for responsive design
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth > 600;
-    
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image Layer
           _buildBackgroundImage(),
-          
-          // Centered Temperature Display with Description below
+
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildGradientTemperatureText(isTablet),
-                SizedBox(height: screenHeight * 0.02), // Small spacing between temperature and description
-                Text(ref.watch(description).when(
+                SizedBox(height: screenHeight * 0.02),
+                Text(
+                  ref.watch(description).when(
                     data: (desc) => desc,
                     loading: () => 'Loading...',
                     error: (error, stack) => 'Error: $error',
@@ -133,55 +125,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ],
             ),
           ),
-          
-          // Other content positioned at top
+
           Positioned(
-            top: screenHeight * 0.02, // 2% from top (responsive)
-            left: screenWidth * 0.005,  // 0.5% from left (responsive)
-            right: screenWidth * 0.005,  // Add right constraint for proper width
+            top: screenHeight * 0.02,
+            left: screenWidth * 0.005,
+            right: screenWidth * 0.005,
             child: RefreshIndicator(
               onRefresh: _refreshWeatherData,
               color: Colors.white,
               backgroundColor: Colors.black.withValues(alpha: 0.5),
               child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(), // Enable pull to refresh
+                physics: AlwaysScrollableScrollPhysics(),
                 child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.04, // 4% horizontal padding
-                vertical: screenHeight * 0.02,  // 2% vertical padding
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Align items to start
-                mainAxisSize: MainAxisSize.min, // Take only needed space
-                children: [
-                  // Location Row
-                  Row(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.04,
+                    vertical: screenHeight * 0.02,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: isTablet ? 32 : 24,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                            color: Colors.black.withValues(alpha: 0.8),
-                          ),
-                        ],
-                      ),
-                      SizedBox(width: 8),
-                      Flexible( // Allow text to wrap if needed
-                        child: Text(
-                          ref.watch(currLocation).when(
-                            data: (city) => city ?? 'Current Location',
-                            loading: () => 'Loading...',
-                            error: (error, stack) => 'Error: $error',
-                          ),
-                          style: TextStyle(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on,
                             color: Colors.white,
-                            fontSize: isTablet ? 32 : 20, // Larger font on tablets
-                            fontWeight: FontWeight.bold,
+                            size: isTablet ? 32 : 24,
                             shadows: [
                               Shadow(
                                 offset: Offset(2, 2),
@@ -190,49 +160,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Add spacing between location and next content
-                  SizedBox(height: screenHeight * 0.03), // 3% of screen height
-
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Today, ${formatDateTime(_currentDateTime)}",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isTablet ? 24 : 16, // Responsive font size
-                          fontWeight: FontWeight.w600,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(2, 2),
-                              blurRadius: 4,
-                              color: Colors.black.withValues(alpha: 0.8),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              ref.watch(currLocation).when(
+                                data: (city) => city ?? 'Current Location',
+                                loading: () => 'Loading...',
+                                error: (error, stack) => 'Error: $error',
+                              ),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isTablet ? 32 : 20,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(2, 2),
+                                    blurRadius: 4,
+                                    color: Colors.black.withValues(alpha: 0.8),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: screenHeight * 0.03),
+
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Today, ${formatDateTime(_currentDateTime)}",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isTablet ? 24 : 16,
+                              fontWeight: FontWeight.w600,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                  color: Colors.black.withValues(alpha: 0.8),
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+
+                      SizedBox(height: screenHeight * 0.07),
+
+                      _buildGradientFeelsLikeText(isTablet),
                     ],
                   ),
-
-                  // Add spacing between location and next content
-                  SizedBox(height: screenHeight * 0.07), // 7% of screen height
-
-                  //Gradient Feels like temperature
-                  _buildGradientFeelsLikeText(isTablet),
-
-                ],
+                ),
               ),
             ),
-                ), // Close SingleChildScrollView
-              ), // Close RefreshIndicator
-            ), // Close Positioned
-          
-          // Sliding Up Panel
+          ),
           SlidingUpPanelWidget(
             controlHeight: screenHeight * 0.2,
             panelController: _panelController,
@@ -251,29 +235,162 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Column(
                 children: [
-                  // Drag handle
                   Container(
-                    width: 40,
-                    height: 5,
-                    margin: EdgeInsets.only(bottom: 15),
+                    width: 50,
+                    height: 4,
+                    margin: EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(2.5),
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-                  // Panel content
+
                   Text(
                     'Weather Details',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w300,
                       color: Colors.black87,
+                      letterSpacing: 1.0,
                     ),
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Additional weather information will appear here...',
-                    style: TextStyle(color: Colors.grey[600]),
+
+                  SizedBox(height: 25),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          WeatherInfoCard(
+                            icon: Icons.wb_sunny_outlined,
+                            title: 'Sunrise',
+                            content: ref.watch(sunriseTime),
+                            formatter: (dynamic sunrise) {
+                              if (sunrise is DateTime) {
+                                return '${sunrise.hour.toString().padLeft(2, '0')}:${sunrise.minute.toString().padLeft(2, '0')}';
+                              }
+                              return sunrise.toString();
+                            },
+                            gradientColors: [
+                              Color(0xFFFFE5B4),
+                              Color(0xFFFFD700),
+                              Color(0xFFFF8C69),
+                              Color(0xFFFF6347),
+                            ],
+                            shadowColor: Colors.orange,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.wb_twighlight,
+                            title: 'Sunset',
+                            content: ref.watch(sunsetTime),
+                            formatter: (dynamic sunset) {
+                              if (sunset is DateTime) {
+                                return '${sunset.hour.toString().padLeft(2, '0')}:${sunset.minute.toString().padLeft(2, '0')}';
+                              }
+                              return sunset.toString();
+                            },
+                            gradientColors: [
+                              Color(0xFF667EEA),
+                              Color(0xFF764BA2),
+                              Color(0xFF2C3E50),
+                              Color(0xFF0F2027),
+                            ],
+                            shadowColor: Colors.indigo,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.speed,
+                            title: 'Pressure',
+                            content: ref.watch(currPressure),
+                            formatter: (dynamic pressure) => '${pressure} hPa',
+                            gradientColors: [
+                              Color(0xFF6C63FF),
+                              Color(0xFF3F51B5),
+                              Color(0xFF2196F3),
+                              Color(0xFF00BCD4),
+                            ],
+                            shadowColor: Colors.purple,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.visibility,
+                            title: 'Visibility',
+                            content: ref.watch(currVisibility),
+                            formatter: (dynamic visibility) {
+                              if (visibility != null) {
+                                return '${(visibility / 1000).toStringAsFixed(1)} km';
+                              }
+                              return 'N/A';
+                            },
+                            gradientColors: [
+                              Color(0xFF48CAE4),
+                              Color(0xFF0077B6),
+                              Color(0xFF023E8A),
+                              Color(0xFF03045E),
+                            ],
+                            shadowColor: Colors.cyan,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.cloud,
+                            title: 'Cloud Cover',
+                            content: ref.watch(currCloudiness),
+                            formatter: (dynamic cloudiness) => '${cloudiness}%',
+                            gradientColors: [
+                              Color(0xFFE9ECEF),
+                              Color(0xFFCED4DA),
+                              Color(0xFF6C757D),
+                              Color(0xFF495057),
+                            ],
+                            shadowColor: Colors.grey,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.grain,
+                            title: 'Rain',
+                            content: ref.watch(currRainVolume),
+                            formatter: (dynamic rain) => '${rain.toStringAsFixed(1)} mm',
+                            gradientColors: [
+                              Color(0xFF74C0FC),
+                              Color(0xFF339AF0),
+                              Color(0xFF1C7ED6),
+                              Color(0xFF1864AB),
+                            ],
+                            shadowColor: Colors.blue,
+                          ),
+
+                          SizedBox(height: 20),
+
+                          WeatherInfoCard(
+                            icon: Icons.ac_unit,
+                            title: 'Snow',
+                            content: ref.watch(currSnowVolume),
+                            formatter: (dynamic snow) => '${snow.toStringAsFixed(1)} mm',
+                            gradientColors: [
+                              Color(0xFFF8F9FA),
+                              Color(0xFFE9ECEF),
+                              Color(0xFFDEE2E6),
+                              Color(0xFFADB5BD),
+                            ],
+                            shadowColor: Colors.blueGrey,
+                          ),
+
+                          SizedBox(height: 30),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -283,10 +400,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       ),
     );
   }
-  Widget _buildBackgroundImage(){
+  Widget _buildBackgroundImage() {
     return AnimatedBuilder(
       animation: _slideController,
-      builder: (context, child){
+      builder: (context, child) {
         return Transform.translate(
           offset: Offset(0, -20 * _slideController.value),
           child: Container(
@@ -305,19 +422,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
   }
 
   Widget _buildGradientTemperatureText(bool isTablet) {
-    final weatherService = WeatherProvider(); // Create instance to access conversion method
-    
+    final weatherService = WeatherProvider();
+
     return Consumer(
       builder: (context, ref, child) {
         return ref.watch(currTemp).when(
           data: (temp) => ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: [
-                Color(0xFFF8E8D8), // Soft cream (moon glow)
-                Color(0xFFFFB899), // Warm peach (mountain highlights)
-                Color(0xFF87CEEB), // Sky blue (twilight)
-                Color(0xFF4682B4), // Steel blue (deeper sky)
-                Color(0xFF2F4F4F), // Dark slate gray (mountain shadows)
+                Color(0xFFF8E8D8),
+                Color(0xFFFFB899),
+                Color(0xFF87CEEB),
+                Color(0xFF4682B4),
+                Color(0xFF2F4F4F),
               ],
               stops: [0.0, 0.2, 0.5, 0.8, 1.0],
               begin: Alignment.topCenter,
@@ -327,12 +444,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               text: TextSpan(
                 children: [
                   TextSpan(
-                    text: '${weatherService.kelvinToCelsius(temp).toStringAsFixed(1)}°',
+                    text: '${weatherService.kelvinToCelsius(temp).toStringAsFixed(1)}°C',
                     style: TextStyle(
-                      color: Colors.white, // This will be replaced by gradient
-                      fontSize: isTablet ? 100 : 80, // Even larger for more impact
-                      fontWeight: FontWeight.w900, // Maximum boldness
-                      letterSpacing: 1.2, // Slightly spaced letters
+                      color: Colors.white,
+                      fontSize: isTablet ? 100 : 80,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
                       shadows: [
                         Shadow(
                           offset: Offset(3, 3),
@@ -345,32 +462,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           color: Colors.black.withValues(alpha: 0.2),
                         ),
                       ],
-                    ),
-                  ),
-                  WidgetSpan(
-                    child: Transform.translate(
-                      offset: Offset(0, -(isTablet ? 16.0 : 12.0)), // Move C up like superscript
-                      child: Text(
-                        'C',
-                        style: TextStyle(
-                          color: Colors.white, // This will be replaced by gradient
-                          fontSize: (isTablet ? 64 : 48) * 0.5, // Smaller superscript
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(3, 3),
-                              blurRadius: 8,
-                              color: Colors.black.withValues(alpha: 0.4),
-                            ),
-                            Shadow(
-                              offset: Offset(-1, -1),
-                              blurRadius: 4,
-                              color: Colors.black.withValues(alpha: 0.2),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -412,11 +503,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildGradientFeelsLikeText(bool isTablet){
+  Widget _buildGradientFeelsLikeText(bool isTablet) {
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1), // Semi-transparent background
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: Colors.white,
@@ -424,12 +515,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         ),
       ),
       padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 32 : 16, // Responsive padding
-        vertical: isTablet ? 16 : 8, // Responsive padding
+        horizontal: isTablet ? 32 : 16,
+        vertical: isTablet ? 16 : 8,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [ 
+        children: [
           Expanded(
             child: Text(
               ref.watch(currFeelsLike).when(
@@ -439,7 +530,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               ),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: isTablet ? 20 : 12, // Smaller font to fit
+                fontSize: isTablet ? 20 : 12,
                 fontWeight: FontWeight.w600,
                 shadows: [
                   Shadow(
@@ -449,24 +540,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   ),
                 ],
               ),
-              textAlign: TextAlign.center, // Center the text
+              textAlign: TextAlign.center,
             ),
           ),
           Container(
-            height: isTablet ? 30 : 25, // Responsive height
+            height: isTablet ? 30 : 25,
             width: 1,
             color: Colors.white,
-            margin: EdgeInsets.symmetric(horizontal: 8), // Add margin
+            margin: EdgeInsets.symmetric(horizontal: 8),
           ),
           Expanded(
-            child: Text(ref.watch(currWindSpeed).when(
+            child: Text(
+              ref.watch(currWindSpeed).when(
                 data: (data) => 'Wind ${data.toStringAsFixed(1)} m/s',
                 error: (error, stack) => 'Error',
                 loading: () => 'Loading...',
               ),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: isTablet ? 20 : 12, // Smaller font to fit
+                fontSize: isTablet ? 20 : 12,
                 fontWeight: FontWeight.w600,
                 shadows: [
                   Shadow(
@@ -476,24 +568,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   ),
                 ],
               ),
-              textAlign: TextAlign.center, // Center the text
+              textAlign: TextAlign.center,
             ),
           ),
           Container(
-            height: isTablet ? 30 : 25, // Responsive height
+            height: isTablet ? 30 : 25,
             width: 1,
             color: Colors.white,
-            margin: EdgeInsets.symmetric(horizontal: 8), // Add margin
+            margin: EdgeInsets.symmetric(horizontal: 8),
           ),
           Expanded(
-            child: Text(ref.watch(currHumidity).when(
+            child: Text(
+              ref.watch(currHumidity).when(
                 data: (data) => 'Humidity ${data.toStringAsFixed(1)}%',
                 error: (error, stack) => 'Error',
                 loading: () => 'Loading...',
               ),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: isTablet ? 20 : 12, // Smaller font to fit
+                fontSize: isTablet ? 20 : 12,
                 fontWeight: FontWeight.w600,
                 shadows: [
                   Shadow(
@@ -503,7 +596,153 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   ),
                 ],
               ),
-              textAlign: TextAlign.center, // Center the text
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class WeatherInfoCard extends ConsumerWidget {
+  final IconData icon;
+  final String title;
+  final AsyncValue<dynamic> content;
+  final String Function(dynamic)? formatter;
+  final List<Color> gradientColors;
+  final Color shadowColor;
+
+  const WeatherInfoCard({
+    Key? key,
+    required this.icon,
+    required this.title,
+    required this.content,
+    this.formatter,
+    required this.gradientColors,
+    required this.shadowColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+          stops: [0.0, 0.3, 0.7, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.2),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              SizedBox(width: 15),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 1.2,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: 15),
+
+          content.when(
+            data: (data) => Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                formatter != null ? formatter!(data) : data.toString(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 2.0,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(0, 2),
+                      blurRadius: 6,
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            loading: () => Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Loading...',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+            error: (error, stack) => Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Unavailable',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 1.0,
+                ),
+              ),
             ),
           ),
         ],
